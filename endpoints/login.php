@@ -35,7 +35,7 @@ function checkExistingUser($data, $db)
   if ($result->num_rows > 0 && password_verify($data->password, $row['password'])) {
     return ['roleId' => $row['roleId'], 'userId' => $row['userId']];
   } else {
-    return -1;
+    return 0;
   }
 }
 function getRole($roleId, $db)
