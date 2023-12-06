@@ -23,7 +23,7 @@ class Database
     if ($this->mysqli->connect_error) {
       die('Connection failed: ' . $this->mysqli->connect_error);
     } else {
-      echo "<h1>Connection was successful!</h1>";
+      // echo "<h1>Connection was successful!</h1>";
     }
   }
   public function getConnection()
