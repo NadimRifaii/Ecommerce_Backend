@@ -4,13 +4,14 @@ require_once '../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 
-function createJWT($roleName)
+function createJWT($roleName, $userId)
 {
   $key = "This is my key";
   $payload = [
     'exp' => time() + 3600,
     'data' => [
       'role' => $roleName,
+      'userId' => $userId
     ]
   ];
   $jwt = JWT::encode($payload, $key, "HS256");
@@ -32,7 +33,7 @@ function checkExistingUser($data, $db)
   $result = $checkQuery->get_result();
   $row = $result->fetch_assoc();
   if ($result->num_rows > 0 && password_verify($data->password, $row['password'])) {
-    return $row['roleId'];
+    return ['roleId' => $row['roleId'], 'userId' => $row['userId']];
   } else {
     return -1;
   }
@@ -55,9 +56,9 @@ function getRole($roleId, $db)
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $data = json_decode(file_get_contents('php://input'));
   if (!empty($data->email) && !empty($data->password)) {
-    if ($roleId = checkExistingUser($data, $db)) {
-      if ($roleName = getRole($roleId, $db)) {
-        $jwt = createJWT($roleName);
+    if ($row = checkExistingUser($data, $db)) {
+      if ($roleName = getRole($row['roleId'], $db)) {
+        $jwt = createJWT($roleName, $row['userId']);
         respond('1', $jwt);
       } else {
         respond('0', "Wrong credentials");

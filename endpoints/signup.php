@@ -4,13 +4,14 @@ require_once '../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 
-function createJWT($roleName)
+function createJWT($roleName, $userId)
 {
   $key = "This is my key";
   $payload = [
     'exp' => time() + 3600,
     'data' => [
       'role' => $roleName,
+      'userId' => $userId
     ]
   ];
   $jwt = JWT::encode($payload, $key, "HS256");
@@ -57,13 +58,23 @@ function getRole($data, $db)
     return null;
   }
 }
+function getUserId($email, $db)
+{
+  $connection = $db->getConnection();
+  $getUserId = $connection->prepare("SELECT userId FROM users WHERE email=?");
+  $getUserId->bind_param("s", $email);
+  $getUserId->execute();
+  $result = $getUserId->get_result();
+  return $result->fetch_assoc()['userId'];
+}
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $data = json_decode(file_get_contents('php://input'));
   if (!empty($data->userName) && !empty($data->lastName) && !empty($data->email) && !empty($data->password) && !empty($data->roleId)) {
     if (checkExistingUser($data->email, $db) == 0) {
       insertUser($data, $db);
       $roleName = getRole($data, $db);
-      $jwt = createJWT($roleName);
+      $userId = getUserId($data->email, $db);
+      $jwt = createJWT($roleName, $userId);
       respond('1', $jwt);
     } else {
       respond('0', "This email already exists");
