@@ -4,15 +4,13 @@ require_once '../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
 
-function createJWT($data)
+function createJWT($roleName)
 {
   $key = "This is my key";
   $payload = [
     'exp' => time() + 3600,
     'data' => [
-      'role' => $data->roleId,
-      "username" => $data->userName,
-      "email" => $data->email
+      'role' => $roleName,
     ]
   ];
   $jwt = JWT::encode($payload, $key, "HS256");
@@ -42,12 +40,30 @@ function insertUser($data, $db)
   $insertQuery->bind_param("ssssi", $data->userName, $data->lastName, $data->email, $hashedPassword, $data->roleId);
   $insertQuery->execute();
 }
+function getRole($data, $db)
+{
+  $connection = $db->getConnection();
+  $getRoleQuery = $connection->prepare("SELECT roleName FROM roletypes WHERE roleId=?");
+  $getRoleQuery->bind_param('i', $data->roleId);
+  $getRoleQuery->execute();
+
+  $result = $getRoleQuery->get_result();
+
+  if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $roleName = $row['roleName'];
+    return $roleName;
+  } else {
+    return null;
+  }
+}
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $data = json_decode(file_get_contents('php://input'));
   if (!empty($data->userName) && !empty($data->lastName) && !empty($data->email) && !empty($data->password) && !empty($data->roleId)) {
     if (checkExistingUser($data->email, $db) == 0) {
       insertUser($data, $db);
-      $jwt = createJWT($data);
+      $roleName = getRole($data, $db);
+      $jwt = createJWT($roleName);
       respond('1', $jwt);
     } else {
       respond('0', "This email already exists");
