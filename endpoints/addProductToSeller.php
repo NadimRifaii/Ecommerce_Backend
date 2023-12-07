@@ -57,28 +57,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $jwt = getallheaders()['Authorization'];
   try {
     $decoded = decodeJWT($jwt);
-  } catch (Exception $exc) {
-    respond('0', $exc->getMessage());
-  }
-  $userId = $decoded->data->userId;
-  if (checkIfSeller($userId, $db) > 0) {
+    $userId = $decoded->data->userId;
     $data = json_decode(file_get_contents("php://input"));
-    if (!empty($data->productId)) {
-      if (checkIfProductExists($data->productId, $db)) {
-        try {
-          addProductToSeller($userId, $data->productId, $db);
-          respond('1', "Added product to seller");
-        } catch (Exception $exc) {
-          respond('0', $exc->getMessage());
+    if (checkIfSeller($userId, $db) > 0) {
+      if (!empty($data->productId)) {
+        if (checkIfProductExists($data->productId, $db)) {
+          try {
+            addProductToSeller($userId, $data->productId, $db);
+            respond('1', "Added product to seller");
+          } catch (Exception $exc) {
+            respond('0', $exc->getMessage());
+          }
+        } else {
+          respond('0', "product doesn't exists");
         }
       } else {
-        respond('0', "product doesn't exists");
+        respond('0', 'Missing credentials');
       }
     } else {
-      respond('0', 'Missing credentials');
+      respond('0', "Only sellers can add products to sell");
     }
-  } else {
-    respond('0', "Only sellers can add products to sell");
+  } catch (Exception $exc) {
+    respond('0', $exc->getMessage());
   }
 } else {
   respond('0', "Invalid request method");

@@ -57,14 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $jwt = getallheaders()['Authorization'];
     try {
       $decoded = decodeJWT($jwt);
+      $userId = $decoded->data->userId;
+      if (checkIfSellerAdmin($userId, $db) > 0) {
+        respond('1', getAllProducts($userId, $db));
+      } else {
+        respond('0', "Only admin and seller of these products can see the list of products");
+      }
     } catch (Exception $exc) {
       respond('0', $exc->getMessage());
-    }
-    $userId = $decoded->data->userId;
-    if (checkIfSellerAdmin($userId, $db) > 0) {
-      respond('1', getAllProducts($userId, $db));
-    } else {
-      respond('0', "Only admin and seller of these products can see the list of products");
     }
   } else {
     respond('0', "Missing credentials");
