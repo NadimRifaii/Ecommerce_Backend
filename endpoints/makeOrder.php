@@ -44,12 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       $jwt = getallheaders()['Authorization'];
       try {
         $decoded = decodeJWT($jwt);
+        $userId = $decoded->data->userId;
+        insertOrder($userId, $data->productId, $data->OrderDate, $db);
+        respond('1', "Order was made successfully");
       } catch (Exception $exc) {
         respond('0', $exc->getMessage());
       }
-      $userId = $decoded->data->userId;
-      insertOrder($userId, $data->productId, $data->OrderDate, $db);
-      respond('1', "Order was made successfully");
     } else {
       respond('0', "Product doesn't exist");
     }
