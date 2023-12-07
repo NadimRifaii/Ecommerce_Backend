@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   try {
     $decoded = decodeJWT($jwt);
   } catch (Exception $exc) {
+    respond('0', $exc->getMessage());
   }
   $userId = $decoded->data->userId;
   if (checkIfSeller($userId, $db) > 0) {
